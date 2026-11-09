@@ -21,7 +21,7 @@ jobs:
     env:
       BUILD_CONFIGURATION: release_arm64
       BAZEL_USER_ROOT: /private/var/tmp/_bazel_ayugram
-      BAZEL_CACHE_DIR: ${{ runner.temp }}/ayugram-bazel-cache
+      BAZEL_CACHE_DIR: /private/var/tmp/ayugram-bazel-cache
     steps:
       - uses: actions/checkout@v4
         with:
