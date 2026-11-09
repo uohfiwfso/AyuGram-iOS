@@ -4622,6 +4622,14 @@ func replayFinalState(
             case let .DeleteEphemeralMessages(peerId, ids):
                 deleteEphemeralMessages(transaction: transaction, peerId: peerId, ids: ids)
             case let .DeleteMessagesWithGlobalIds(ids):
+                // AyuGram: keep a copy of every deleted message before it goes away.
+                MessageSavingBridge.snapshotMessages(
+                    transaction: transaction,
+                    accountPeerId: accountPeerId,
+                    messageIds: transaction.messageIdsForGlobalIds(ids),
+                    kind: .deleted,
+                    mediaBox: mediaBox
+                )
                 var resourceIds: [MediaResourceId] = []
                 transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
                     addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
@@ -4631,6 +4639,14 @@ func replayFinalState(
                 }
                 deletedMessageIds.append(contentsOf: ids.map { .global($0) })
             case let .DeleteMessages(ids):
+                // AyuGram: keep a copy of every deleted message before it goes away.
+                MessageSavingBridge.snapshotMessages(
+                    transaction: transaction,
+                    accountPeerId: accountPeerId,
+                    messageIds: ids,
+                    kind: .deleted,
+                    mediaBox: mediaBox
+                )
                 _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: ids, manualAddMessageThreadStatsDifference: { id, add, remove in
                     addMessageThreadStatsDifference(threadKey: id, remove: remove, addedMessagePeer: nil, addedMessageId: nil, isOutgoing: false)
                 })
@@ -4639,6 +4655,10 @@ func replayFinalState(
                 if let message = transaction.getMessage(id) {
                     updatePeerChatInclusionWithMinTimestamp(transaction: transaction, id: id.peerId, minTimestamp: message.timestamp, forceRootGroupIfNotExists: false)
                 }
+                // AyuGram: Telegram drops everything below this id. Messages that were deleted
+                // while they were outside the loaded window are still recoverable from our own
+                // store, so snapshot the range before it is wiped.
+                MessageSavingBridge.snapshotMessagesUpTo(transaction: transaction, peerId: id.peerId, namespace: id.namespace, maxId: id.id, mediaBox: mediaBox)
                 var resourceIds: [MediaResourceId] = []
                 transaction.deleteMessagesInRange(peerId: id.peerId, namespace: id.namespace, minId: 1, maxId: id.id, forEachMedia: { media in
                     addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
@@ -4670,6 +4690,25 @@ func replayFinalState(
             case let .EditMessage(id, message):
                 var generatedEvent: (reactionAuthor: Peer, reaction: MessageReaction.Reaction, message: Message, timestamp: Int32)?
                 transaction.updateMessage(id, update: { previousMessage in
+                    // AyuGram: keep the previous text of an edited message.
+                    if previousMessage.text != message.text {
+                        let previousText = previousMessage.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                        let nextText = message.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                        if !previousText.isEmpty, previousText != nextText {
+                            MessageSavingBridge.snapshotMessage(
+                                message: previousMessage,
+                                accountPeerId: accountPeerId,
+                                kind: .edited
+                            )
+                        }
+                    } else if let previousRichText = previousMessage.richText, previousRichText.instantPage.fullPlainText != (message.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute)?.instantPage.fullPlainText {
+                        // A rich message keeps its text in the page; both plain texts are empty.
+                        MessageSavingBridge.snapshotMessage(
+                            message: previousMessage,
+                            accountPeerId: accountPeerId,
+                            kind: .edited
+                        )
+                    }
                     let peers: [PeerId:Peer] = previousMessage.peers.reduce([:], { current, value in
                         var current = current
                         current[value.0] = value.1

@@ -55,6 +55,9 @@ extension PeerInfoScreenNode {
         switch section {
         case .swiftgram:
             self.controller?.push(sgSettingsController(context: self.context))
+        case .ayugram:
+            // AyuGram: the switches that decide what is kept, and the way into the kept messages.
+            self.controller?.push(ayuGramSettingsController(context: self.context))
         case .swiftgramPro:
             if self.context.sharedContext.immediateSGStatus.status > 1 {
                 self.controller?.push(self.context.sharedContext.makeSGProController(context: self.context))

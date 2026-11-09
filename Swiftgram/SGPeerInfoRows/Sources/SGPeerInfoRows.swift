@@ -175,5 +175,9 @@ func sgPeerInfoSettingsItems(context: AccountContext, paymentsEnabled: Bool, pre
     items.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
         interaction.openSettings(.swiftgram)
     }))
+    // AyuGram: kept deleted and edited messages.
+    items.append(PeerInfoScreenDisclosureItem(id: 2, label: .none, text: "AyuGram", action: {
+        interaction.openSettings(.ayugram)
+    }))
     return items
 }
