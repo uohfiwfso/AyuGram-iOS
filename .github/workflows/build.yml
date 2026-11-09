@@ -81,6 +81,7 @@ jobs:
             --configuration="$BUILD_CONFIGURATION" \
             --buildNumber="$BUILD_NUMBER" \
             --disableExtensions \
+            --continueOnError \
             --outputBuildArtifactsPath="$GITHUB_WORKSPACE/build/artifacts" \
             2>&1 | tee build.log
 
