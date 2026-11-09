@@ -528,7 +528,7 @@ public func messageSavingDeletedChatsController(context: AccountContext) -> View
         var counts: [Int64: Int] = [:]
         var sizes: [Int64: Int64] = [:]
         var authorTitles: [Int64: String] = [:]
-        let countedPaths = Set<String>()
+        var countedPaths = Set<String>()
         for record in records {
             if counts[record.peerId] == nil {
                 order.append(record.peerId)

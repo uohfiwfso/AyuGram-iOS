@@ -748,7 +748,7 @@ public enum MessageSavingStore {
             memory = []
             rebuildIndexesLocked()
         }
-        let existingIds = Set(memory.map(\.id))
+        var existingIds = Set(memory.map(\.id))
         var added = 0
         for record in incoming {
             if existingIds.contains(record.id) {
