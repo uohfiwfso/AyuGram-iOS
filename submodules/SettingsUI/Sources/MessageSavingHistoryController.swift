@@ -201,7 +201,7 @@ private func messageSavingHistoryController(
     // filesystem here also picks up a file the user removed from Files.app and a legacy-named
     // copy from before account scoping.
     let reconcileAccountPeerId = context.account.peerId
-    let reconcileMediaBox = context.account.postbox.mediaBox
+    let reconcileMediaBox = context.sharedContext.accountManager.mediaBox
     DispatchQueue.global(qos: .utility).async {
         let reconcileRecords = messageSavingRecords(mode: mode, accountPeerId: reconcileAccountPeerId)
         if !reconcileRecords.isEmpty {
