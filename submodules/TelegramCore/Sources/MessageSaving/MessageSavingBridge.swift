@@ -310,9 +310,10 @@ public enum MessageSavingBridge {
     }
 
     private static func shouldSave(message: Message, settings: MessageSavingBridgeSettings) -> Bool {
-        if message.isLocallyDeleted {
-            return false
-        }
+        // Telegram 13.1 has no `isLocallyDeleted` on the message model: a message that was
+        // deleted is simply gone from Postbox. The snapshot is taken inside the delete
+        // transaction, before the deletion is applied, so the message we are looking at is
+        // still the live one — there is nothing to skip here.
         // AyuGram Android saves outgoing/own messages too — no Incoming-only filter.
         if let author = message.author as? TelegramUser, author.botInfo != nil, !settings.saveForBots {
             return false

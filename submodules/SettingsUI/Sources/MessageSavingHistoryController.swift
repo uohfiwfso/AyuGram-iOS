@@ -574,7 +574,7 @@ public func messageSavingDeletedChatsController(context: AccountContext) -> View
             entries.append(.empty(ForkMessageSavingStrings.noDeleted))
         } else if !trimmedQuery.isEmpty {
             let matches = records.filter { record in
-                return bananaDeletedMessageMatchesQuery(text: record.text + " " + record.authorName, query: trimmedQuery)
+                return ayuGramSavedMessageMatchesQuery(text: record.text + " " + record.authorName, query: trimmedQuery)
             }
             if matches.isEmpty {
                 entries.append(.empty(russian ? "Ничего не найдено." : "No messages found."))
