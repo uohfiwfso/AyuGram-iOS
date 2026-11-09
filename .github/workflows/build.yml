@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     name: Build arm64 release
-    runs-on: macos-26
+    runs-on: macos-15
     timeout-minutes: 300
     env:
       BUILD_CONFIGURATION: release_arm64
