@@ -592,7 +592,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         try! PasscodeEnvironment.shared.configure(PasscodeConfiguration(appGroupIdentifier: appGroupName, processRole: .mainApp, biometricKeychainService: walletBiometricKeychainService), privateAccessGroup: {
             BuildConfig.keychainAccessGroup(baseAppBundleId: baseAppBundleId)
         })
+        // AyuGram: the app-group container is not guaranteed to exist on a jailbroken device
+        // (TrollStore / roothide may not create group.<bundleId>). Falling back to the app's
+        // own Documents directory keeps the client bootable instead of dying with "Error 2".
         let maybeAppGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
         self.buildConfig = buildConfig
