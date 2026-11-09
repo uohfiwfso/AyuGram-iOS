@@ -8,7 +8,9 @@ on:
 
 concurrency:
   group: ayugram-${{ github.ref }}
-  cancel-in-progress: true
+  # false: a new push must not kill a build that is already deep in the compile — its log
+  # is what tells us what else is broken.
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -16,17 +18,16 @@ permissions:
 jobs:
   build:
     name: Release build (${{ matrix.runner }})
-    # Two pools on purpose: the arm64 images are capacity-constrained at the moment
-    # and GitHub kills a job that waits in their queue for more than ~15 minutes
-    # ("Due to capacity constraints, jobs targeting macOS arm64 runners may experience
-    # longer queue times"), while the Intel pool hands out runners instantly.
-    # fail-fast: false — a starved arm64 job must not cancel the Intel one.
+    # The xcode-27 image (macOS 27, arm64) is the only hosted image with Xcode 27.1, and
+    # Swiftgram master needs it: the code calls UIView.reservedRegions, an iOS 27.1 SDK API,
+    # so Xcode 26.x cannot compile it at all.
+    # The plain macos-* images are capacity-constrained right now and GitHub kills a job
+    # that waits in their queue for more than ~15 minutes.
     strategy:
       fail-fast: false
       matrix:
         runner:
-          - macos-26-intel
-          - macos-15
+          - xcode-27
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 300
     env:
