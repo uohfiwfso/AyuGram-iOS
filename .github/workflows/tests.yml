@@ -13,7 +13,6 @@ on:
       - 'submodules/TelegramUIPreferences/Sources/MessageSaving*.swift'
       - 'submodules/SettingsUI/Sources/MessageSavingHistoryController.swift'
       - 'Tests/MessageSaving/**'
-      - 'Tests/GhostMode/**'
 
 concurrency:
   group: ayugram-tests-${{ github.ref }}
@@ -49,8 +48,4 @@ jobs:
           set -euo pipefail
           python3 Tests/MessageSaving/run.py
 
-      - name: Ghost Mode tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 Tests/GhostMode/run.py
+      # Ghost Mode (P3) is not ported yet; its test comes with it.
