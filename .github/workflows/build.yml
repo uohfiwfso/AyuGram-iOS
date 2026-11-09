@@ -15,8 +15,19 @@ permissions:
 
 jobs:
   build:
-    name: Build arm64 release
-    runs-on: macos-26-intel
+    name: Release build (${{ matrix.runner }})
+    # Two pools on purpose: the arm64 images are capacity-constrained at the moment
+    # and GitHub kills a job that waits in their queue for more than ~15 minutes
+    # ("Due to capacity constraints, jobs targeting macOS arm64 runners may experience
+    # longer queue times"), while the Intel pool hands out runners instantly.
+    # fail-fast: false — a starved arm64 job must not cancel the Intel one.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - macos-26-intel
+          - macos-15
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 300
     env:
       BUILD_CONFIGURATION: release_arm64
@@ -28,14 +39,29 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      # The build is triggered by a push to this branch: a workflow_dispatch on this
-      # repository failed on GitHub's side with an internal server error while the job
-      # was being created, while push-triggered runs got a runner.
-      #
-      # The runner is the Intel image on purpose: the arm64 images (macos-15, macos-26)
-      # are capacity-constrained right now, and GitHub kills a job that waits in that
-      # queue for more than ~15 minutes. The Intel pool is separate and, as a bonus,
-      # defaults to Xcode 26.6 — the version the reference Telegram-iOS fork builds with.
+      - name: Pin bazel for this runner architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          # versions.json pins the SHA256 of the arm64 bazel binary. The build script
+          # downloads the binary that matches the host and compares it against that pin,
+          # so on an Intel runner it deletes the x86_64 download and dies. Swap in the
+          # hash of the binary that belongs to this machine.
+          ARCH="$(uname -m)"
+          case "$ARCH" in
+            arm64)
+              SHA="dd466352a3e4d3581b8898740ee1ff208866ccbe25f8d367c5dcb950219587e6"
+              ;;
+            x86_64)
+              SHA="14c9bcb01303b38192e0e2895051c1bcf19bf89d7e416f5aeeeb48b6b624cfbf"
+              ;;
+            *)
+              echo "::error::unknown runner architecture ${ARCH}"
+              exit 1
+              ;;
+          esac
+          python3 -c "import json,sys;p='versions.json';d=json.load(open(p));d['bazel']=d['bazel'].split(':')[0]+':'+sys.argv[1];json.dump(d,open(p,'w'),indent=4);print('bazel pin:',d['bazel'])" "$SHA"
+
       - name: Select Xcode
         shell: bash
         run: |
@@ -104,6 +130,8 @@ jobs:
             grep -B2 -A10 'Undefined symbols for' build.log | tail -40 || true
             echo "### linker errors"
             grep -E 'ld: |duplicate symbol|file was built for' build.log | tail -20 || true
+            echo "### tail of the build log"
+            tail -40 build.log
           } || true
 
       - name: Collect IPA and pack tipa
@@ -134,7 +162,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: AyuGram-ipa
+          name: AyuGram-ipa-${{ matrix.runner }}
           path: artifacts/
           retention-days: 14
           if-no-files-found: error
