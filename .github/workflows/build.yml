@@ -36,11 +36,20 @@ jobs:
         run: |
           set -euo pipefail
           WANTED="$(python3 -c 'import json;print(json.load(open("versions.json"))["xcode"])')"
+          SELECTED=""
           if [ -d "/Applications/Xcode_${WANTED}.app" ]; then
-            sudo xcode-select -s "/Applications/Xcode_${WANTED}.app/Contents/Developer"
+            SELECTED="/Applications/Xcode_${WANTED}.app"
           else
-            echo "::warning::Xcode ${WANTED} is not present on this image; using the image default"
+            # The pinned Xcode is not on this image; the image default can be much older
+            # (macos-15 defaults to Xcode 16.4), so take the newest one that is installed.
+            SELECTED="$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)"
+            echo "::warning::Xcode ${WANTED} is not on this image; using ${SELECTED}"
           fi
+          if [ -z "$SELECTED" ]; then
+            echo "::error::no Xcode found on this image"
+            exit 1
+          fi
+          sudo xcode-select -s "$SELECTED/Contents/Developer"
           xcodebuild -version
           swift --version || true
 
