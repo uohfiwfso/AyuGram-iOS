@@ -47,6 +47,7 @@ class BazelCommandLine:
         self.show_actions = False
         self.enable_sandbox = False
         self.disable_provisioning_profiles = False
+        self.disable_extensions = False
         self.profile_swift = False
         # MARK: Swiftgram
         self.bazel_profile = None
@@ -144,6 +145,9 @@ class BazelCommandLine:
 
     def set_disable_provisioning_profiles(self):
         self.disable_provisioning_profiles = True
+
+    def set_disable_extensions(self):
+        self.disable_extensions = True
 
     def set_profile_swift(self, value):
         self.profile_swift = value
@@ -315,6 +319,9 @@ class BazelCommandLine:
 
         if self.disable_provisioning_profiles:
             combined_arguments += ['--//Telegram:disableProvisioningProfiles']
+
+        if self.disable_extensions:
+            combined_arguments += ['--//Telegram:disableExtensions']
 
         combined_arguments += self.common_args
         combined_arguments += self.common_build_args
@@ -665,6 +672,8 @@ def build(bazel, arguments):
     # MARK: Swiftgram
     if arguments.disableProvisioningProfiles:
         bazel_command_line.set_disable_provisioning_profiles()
+    if arguments.disableExtensions:
+        bazel_command_line.set_disable_extensions()
     if arguments.bazelProfile is not None:
         bazel_profile_path = os.path.abspath(arguments.bazelProfile)
         os.makedirs(os.path.dirname(bazel_profile_path), exist_ok=True)
@@ -1070,6 +1079,12 @@ if __name__ == '__main__':
         action='store_true',
         default=False,
         help='Build without provisioning profiles.',
+    )
+    buildParser.add_argument(
+        '--disableExtensions',
+        action='store_true',
+        default=False,
+        help='Build without the app extensions (Share, Widget, Notification Service).',
     )
     buildParser.add_argument(
         '--bazelProfile',
