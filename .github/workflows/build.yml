@@ -28,6 +28,9 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      # The build is triggered by a push to this branch: a workflow_dispatch on this
+      # repository failed on GitHub's side with an internal server error while the job
+      # was being created, while push-triggered runs got a runner.
       - name: Select Xcode
         shell: bash
         run: |
