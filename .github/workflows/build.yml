@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     name: Build arm64 release
-    runs-on: macos-15
+    runs-on: macos-26-intel
     timeout-minutes: 300
     env:
       BUILD_CONFIGURATION: release_arm64
@@ -31,6 +31,11 @@ jobs:
       # The build is triggered by a push to this branch: a workflow_dispatch on this
       # repository failed on GitHub's side with an internal server error while the job
       # was being created, while push-triggered runs got a runner.
+      #
+      # The runner is the Intel image on purpose: the arm64 images (macos-15, macos-26)
+      # are capacity-constrained right now, and GitHub kills a job that waits in that
+      # queue for more than ~15 minutes. The Intel pool is separate and, as a bonus,
+      # defaults to Xcode 26.6 — the version the reference Telegram-iOS fork builds with.
       - name: Select Xcode
         shell: bash
         run: |
