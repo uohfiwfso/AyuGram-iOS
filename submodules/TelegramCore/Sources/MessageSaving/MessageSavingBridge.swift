@@ -96,7 +96,7 @@ public struct MessageSavingRecord: Codable, Equatable {
     }
 
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+        let container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.id, forKey: .id)
         try container.encode(self.accountPeerId, forKey: .accountPeerId)
         try container.encode(self.peerId, forKey: .peerId)
@@ -429,7 +429,7 @@ public enum MessageSavingBridge {
         }
         var removedFetch: Disposable?
         let _ = activeFetchDisposables.modify { current -> [PreserveKey: Disposable] in
-            var updated = current
+            let updated = current
             removedFetch = updated.removeValue(forKey: key)
             return updated
         }
