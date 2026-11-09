@@ -575,6 +575,16 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         self.initSGIAP(isMainApp: applicationBindings.isMainApp)
         //
         
+        // AyuGram: install the message-saving bridge immediately, with the switches as they
+        // are right now. The account state sync below can delete messages before anything
+        // else has run — without an eager sink those snapshots were dropped and the saved
+        // list stayed empty.
+        MessageSavingStore.installBridge()
+        if applicationBindings.isMainApp {
+            MessageSavingStore.scheduleAttachmentCleanup()
+        }
+        //
+        
         let _ = self.contactDataManager?.personNameDisplayOrder().start(next: { order in
             let _ = updateContactSettingsInteractively(accountManager: accountManager, { settings in
                 var settings = settings

@@ -6168,7 +6168,21 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             f(.dismissWithoutContent)
                             self?.interfaceInteraction?.beginMessageSearch(.everything, "")
                         })))
-                                                
+                        
+                        // AyuGram: the messages that were deleted in this chat.
+                        if AyuGramSettings.shared.saveDeleted {
+                            items.append(.action(ContextMenuActionItem(text: "View Deleted", icon: { theme in
+                                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Archive"), color: theme.actionSheet.primaryTextColor)
+                            }, action: { [weak self] _, f in
+                                f(.dismissWithoutContent)
+                                guard let strongSelf = self else {
+                                    return
+                                }
+                                let controller = messageSavingDeletedController(context: context, peerId: peer.id)
+                                strongSelf.push(controller)
+                            })))
+                        }
+                        
                         return items
                     }
                 case let .replyThread(message):
@@ -6418,6 +6432,20 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             f(.dismissWithoutContent)
                             self?.interfaceInteraction?.beginMessageSearch(.everything, "")
                         })))
+                        
+                        // AyuGram: the messages that were deleted in this chat.
+                        if AyuGramSettings.shared.saveDeleted {
+                            items.append(.action(ContextMenuActionItem(text: "View Deleted", icon: { theme in
+                                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Archive"), color: theme.actionSheet.primaryTextColor)
+                            }, action: { [weak self] _, f in
+                                f(.dismissWithoutContent)
+                                guard let strongSelf = self else {
+                                    return
+                                }
+                                let controller = messageSavingDeletedController(context: context, peerId: peer.id, topicId: threadId)
+                                strongSelf.push(controller)
+                            })))
+                        }
                         
                         if threadId != 1 {
                             var canOpenClose = false
