@@ -4701,13 +4701,19 @@ func replayFinalState(
                                 kind: .edited
                             )
                         }
-                    } else if let previousRichText = previousMessage.richText, previousRichText.instantPage.fullPlainText != (message.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute)?.instantPage.fullPlainText {
-                        // A rich message keeps its text in the page; both plain texts are empty.
-                        MessageSavingBridge.snapshotMessage(
-                            message: previousMessage,
-                            accountPeerId: accountPeerId,
-                            kind: .edited
-                        )
+                    } else {
+                        // A rich message carries its text in an instant page and sends an empty
+                        // `text`, so compare the rich attributes themselves — the attribute is
+                        // Equatable and covers the whole page.
+                        let previousRich = previousMessage.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute
+                        let nextRich = message.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute
+                        if previousRich != nil, previousRich != nextRich {
+                            MessageSavingBridge.snapshotMessage(
+                                message: previousMessage,
+                                accountPeerId: accountPeerId,
+                                kind: .edited
+                            )
+                        }
                     }
                     let peers: [PeerId:Peer] = previousMessage.peers.reduce([:], { current, value in
                         var current = current

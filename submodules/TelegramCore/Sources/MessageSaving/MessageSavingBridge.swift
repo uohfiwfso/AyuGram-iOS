@@ -231,7 +231,7 @@ public enum MessageSavingBridge {
         }
         // A rich message (Telegram 13) carries its text in an instant page and sends `text: ""`.
         if let richText = message.richText {
-            let plain = richText.instantPage.fullPlainText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let plain = richText.instantPage.plainText.trimmingCharacters(in: .whitespacesAndNewlines)
             return plain.isEmpty ? "[Rich text]" : plain
         }
         for media in message.media {
